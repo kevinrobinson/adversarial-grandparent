@@ -14,42 +14,65 @@ async function main() {
   
   var i = 0;
   var foundClassNames = {};
+  const explores = 10;
   async function iteration(parent) {
-    const paths = await Promise.all(_.range(0, 5).map(async n => {
-      const mutant = await mutate(parent);
+    const paths = await Promise.all(_.range(0, explores).map(async n => {
+      const mutant = await mutate(parent, {});
       const predictions = await model.classify(mutant);
       // const tigerCat = predictions.filter(p => p.className === 'tiger cat')[0];
       // const p = tigerCat ? tigerCat.probability : 0;
+      
+      // highest not yet found
       const prediction = predictions.filter(prediction => !foundClassNames[prediction.className])[0];
       const p = prediction.probability;
       const className = prediction.className;
       return {mutant, predictions, p, className};
     }));
+    const debug = paths.map(path => { return {p: path.p, className: path.className }; });
     const {mutant, p, predictions, className} = _.maxBy(paths, path => path.p);
     
+    // decide
+    i++;
+    const next = action(foundClassNames, {i, p, className, mutant, parent});
+    
+    // render
     const div = document.createElement('div');
     div.style.display = 'flex';
     div.style.height = '200px';
     const pre = document.createElement('pre');
-    pre.innerHTML = JSON.stringify({i, p, predictions}, null, 2);
+    pre.innerHTML = JSON.stringify({
+      i,
+      wat: next.wat,
+      p,
+      predictions
+    }, null, 2);
     pre.style['overflow-y'] = 'hidden';
     div.appendChild(mutant);
     div.appendChild(pre);
     document.querySelector('#out').appendChild(div);
     
-    i++;
-    if (i > 100) return;
-    if (p > 0.99) {
-      foundClassNames[className] = true;
-      console.log('> found' + className, i, p);
+    // act
+    if (next.wat === 'done') return;
+    if (next.wat === 'found') {
+      foundClassNames[next.params.className] = true;
+      console.log('> found' + next.params.className);
+      return iteration(next.params.parent);
     }
-    if (!foundClassNames[className] && p > 0.10) return iteration(mutant);
-    iteration(parent);
+    if (next.wat === 'continue') return iteration(next.params.mutant);
+    if (next.wat === 'abandon') return iteration(next.params.parent);
   }
   iteration(seed);
 }
 
-async function mutate(parent) {
+function action(foundClassNames, params) {
+  const {i, p, className, mutant, parent} = params;
+  if (i > 1000) return {wat: 'done'};
+  if (p > 0.99) return {wat:'found', params};
+  if (!foundClassNames[className] && p > 0.10) return {wat:'continue', params};
+  return {wat:'abandon', params};
+}
+
+async function mutate(parent, options = {}) {
   const canvas = document.createElement('canvas');
   canvas.width = 200;
   canvas.height = 200;
@@ -61,11 +84,13 @@ async function mutate(parent) {
   const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
   ctx.putImageData(data, 0, 0);
   
-  // rect
-  rectMutation(canvas, ctx);
-  
-  // clipart
-  
+  // branch for more diversity
+  const branch = options.flip || Math.random();
+  if (branch < 0.20) {
+    await clipartMutation(canvas, ctx);
+  } else {
+    rectMutation(canvas, ctx);
+  }
   return canvas;
 }
 
@@ -78,6 +103,7 @@ async function clipartMutation(canvas, ctx) {
       ctx.drawImage(img, 0, 0);
       resolve(canvas);
     }
+    img.crossOrigin = 'Anonymous';
     img.src = `https://picsum.photos/200/200?${i}`
   });
 }
