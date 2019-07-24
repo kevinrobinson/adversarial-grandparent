@@ -9,3 +9,11 @@ h1 {
   font-style: italic;
   color: #373fff;
 }
+
+#frame {
+  zoom: 50%;
+}
+
+.try .label {
+  cursor: pointer;
+}

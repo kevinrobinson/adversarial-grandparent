@@ -14,9 +14,9 @@ async function main() {
   
   var i = 0;
   var foundClassNames = {};
-  const explores = 20;
+  const EXPLORATIONS = 12; // essentially tunes the level of feedback during iterations
   async function iteration(parent) {
-    const paths = await Promise.all(_.range(0, explores).map(async n => {
+    const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
       
@@ -49,15 +49,17 @@ async function main() {
       predictions
     }, null, 2);
     if (SHOW_GRID) {
-      div.title = json;
       if (SHOW_LABEL) {
         const labelEl = document.createElement('div');
+        labelEl.classList.add('label');
         labelEl.style.width = '200px';
         labelEl.style.height = '1.5em';
         labelEl.style.overflow = 'hidden';
+        labelEl.style.opacity = p;
         labelEl.style['font-size'] = '12px';
-        div.appendChild(labelEl);
         labelEl.innerText = p.toFixed(3) + '  ' + className;
+        labelEl.title = json;
+        div.appendChild(labelEl);
       }
     } else {
       const pre = document.createElement('pre');
@@ -130,7 +132,7 @@ async function clipartMutation(canvas, ctx) {
 // color rectangles
 function rectMutation(canvas, ctx, options = {}) {
   const min = options.min || 1;
-  const range = options.range || 2;
+  const range = options.range || 3;
   ctx.fillStyle = rgbaify([
     Math.round(Math.random()*255),
     Math.round(Math.random()*255),

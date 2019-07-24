@@ -19,18 +19,26 @@
     <link rel="stylesheet" href="/style.css">
   </head>  
   <body>
-    <h1>Hi there!</h1>
-    
-    <p>
-      I'm your cool new webpage that is going to start grabbing some images and messing with them.  Hover to see details, zoom out to see more images.  Made with <a href="https://glitch.com">Glitch</a>!
-    </p>
+    <div style="display: flex;">
+      <img
+        id="img"
+        crossorigin="anonymous"
+        alt="cat"
+        width="200"
+        style="margin-right: 20px; margin-bottom: 20px;"
+        src="https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2Fcat.png?v=1563990068178" />
+      <div>
+        <h1>Hi there!</h1>
+        <p>
+          I'm your cool new webpage that is going to start grabbing some images and messing with them.
+          <br/>I'm going to keep messing around until MobileNet is super confident that it knows what they are.
+          <br />
+          <br />Zoom out to see more images, hover on the label to see details.
+          <br />Made with <a href="https://glitch.com">Glitch</a>!
+        </p>
+      </div>
+    </div>
 
-    <img
-      id="img"
-      crossorigin="anonymous"
-      alt="cat"
-      width="200"
-      src="https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2Fcat.png?v=1563990068178" />
   
     <!-- include the Glitch button to show what the webpage is about and
           to make it easier for folks to view source and remix -->
