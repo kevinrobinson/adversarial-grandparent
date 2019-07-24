@@ -29,3 +29,19 @@ h1 {
 .try .label {
   cursor: pointer;
 }
+
+#img-status {
+  position: relative;
+  margin-right: 20px;
+  margin-bottom: 20px;
+}
+
+#status {
+  position: absolute;
+  top: 50px;
+  right: 0px;
+  width: 150px;
+  text-align: right;
+  color: white;
+  padding-right: 10px;
+}

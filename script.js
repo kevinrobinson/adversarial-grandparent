@@ -14,7 +14,7 @@ async function main() {
   
   var i = 0;
   var foundClassNames = {};
-  const EXPLORATIONS = 12; // essentially tunes the level of feedback during iterations
+  const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
   async function iteration(parent) {
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       const mutant = await mutate(parent);
@@ -119,12 +119,12 @@ async function clipartMutation(canvas, ctx) {
   const i = Math.random();
   return new Promise((resolve, reject) => {
     img.onload = async function() {
-      console.log('loaded');
+      status('starting!');
       ctx.drawImage(img, 0, 0);
       resolve(canvas);
     }
     img.crossOrigin = 'Anonymous';
-    console.log('loading...');
+    status('starting up...');
     img.src = `https://picsum.photos/200/200?${i}`
   });
 }
@@ -171,5 +171,9 @@ function rgbaify(quad) {
 //   }
 //   ctx.putImageData(frame, 0, 0);
 // }
+
+function status(msg) {
+  document.querySelector('#status').innerText = msg;
+}
 
 main();
