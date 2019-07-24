@@ -35,6 +35,7 @@ async function main() {
     
     // render
     const SHOW_GRID = true; // grid style, or just a list
+    const SHOW_LABEL = true;
     const div = document.createElement('div');
     div.style.display = SHOW_GRID ? 'inline-block' : 'flex';
     div.style.height = '200px';
@@ -48,8 +49,16 @@ async function main() {
     }, null, 2);
     if (SHOW_GRID) {
       div.title = json;
+      if (SHOW_LABEL) {
+        const labelEl = document.createElement('div');
+        labelEl.style.width = '200px';
+        labelEl.style.height = '1.5em';
+        labelEl.style.overflow = 'hidden';
+        labelEl.style['font-size'] = '12px';
+        div.appendChild(labelEl);
+        labelEl.innerText = p.toFixed(3) + '  ' + className;
+      }
     } else {
-      
       const pre = document.createElement('pre');
       pre.innerHTML = json;
       pre.style['overflow'] = 'hidden';
@@ -66,16 +75,20 @@ async function main() {
     }
     if (next.wat === 'continue') return iteration(next.params.mutant);
     if (next.wat === 'abandon') return iteration(next.params.parent);
+    if (next.wat === 'diverge') return iteration(mutate(next.params.parent, {forceClipart:true})); 
   }
-  iteration(seed);
+  iteration((mutate(seed, {forceClipart:true})));
 }
 
 function action(foundClassNames, params) {
   const {i, p, className, mutant, parent} = params;
   if (i > 1000) return {wat: 'done'};
   if (p > 0.99) return {wat:'found', params};
-  if (!foundClassNames[className] && p > 0.10) return {wat:'continue', params};
-  return {wat:'abandon', params};
+  if (!foundClassNames[className]) return {wat:'continue', params};
+  // return {wat:'abandon', params};
+  
+  console.log('diverge!');
+  return {wat:'diverge', params}
 }
 
 async function mutate(parent, options = {}) {
@@ -91,9 +104,8 @@ async function mutate(parent, options = {}) {
   ctx.putImageData(data, 0, 0);
   
   // branch for more diversity
-  const branch = options.flip || Math.random();
-  const CLIPART_P = 0.01;
-  if (branch < CLIPART_P) {
+  console.log('forceClipart', options.forceClipart);
+  if (options.forceClipart) {
     await clipartMutation(canvas, ctx);
   } else {
     rectMutation(canvas, ctx);
@@ -107,10 +119,12 @@ async function clipartMutation(canvas, ctx) {
   const i = Math.random();
   return new Promise((resolve, reject) => {
     img.onload = async function() {
+      console.log('loaded');
       ctx.drawImage(img, 0, 0);
       resolve(canvas);
     }
     img.crossOrigin = 'Anonymous';
+    console.log('loading...');
     img.src = `https://picsum.photos/200/200?${i}`
   });
 }
