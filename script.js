@@ -14,7 +14,7 @@ async function main() {
   
   var i = 0;
   var foundClassNames = {};
-  const explores = 10;
+  const explores = 20;
   async function iteration(parent) {
     const paths = await Promise.all(_.range(0, explores).map(async n => {
       const mutant = await mutate(parent);
@@ -34,19 +34,27 @@ async function main() {
     const next = action(foundClassNames, {i, p, className, mutant, parent});
     
     // render
+    const SHOW_GRID = true; // grid style, or just a list
     const div = document.createElement('div');
-    div.style.display = 'flex';
+    div.style.display = SHOW_GRID ? 'inline-block' : 'flex';
     div.style.height = '200px';
-    const pre = document.createElement('pre');
-    pre.innerHTML = JSON.stringify({
+    div.style.opacity = SHOW_GRID ? p : 1;
+    div.appendChild(mutant);
+    const json = JSON.stringify({
       i,
       wat: next.wat,
       p,
       predictions
     }, null, 2);
-    pre.style['overflow-y'] = 'hidden';
-    div.appendChild(mutant);
-    div.appendChild(pre);
+    if (SHOW_GRID) {
+      div.title = json;
+    } else {
+      
+      const pre = document.createElement('pre');
+      pre.innerHTML = json;
+      pre.style['overflow'] = 'hidden';
+      div.appendChild(pre);
+    }
     document.querySelector('#out').appendChild(div);
     
     // act
@@ -84,7 +92,7 @@ async function mutate(parent, options = {}) {
   
   // branch for more diversity
   const branch = options.flip || Math.random();
-  const CLIPART_P = 0.05;
+  const CLIPART_P = 0.01;
   if (branch < CLIPART_P) {
     await clipartMutation(canvas, ctx);
   } else {
