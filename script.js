@@ -119,7 +119,7 @@ async function clipartMutation(canvas, ctx) {
   const i = Math.random();
   return new Promise((resolve, reject) => {
     img.onload = async function() {
-      status('starting!');
+      status('making trouble!');
       ctx.drawImage(img, 0, 0);
       resolve(canvas);
     }

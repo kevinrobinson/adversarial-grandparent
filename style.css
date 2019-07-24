@@ -23,7 +23,7 @@ h1 {
 }
 
 #out {
-  zoom: 50%;
+  zoom: 80%;
 }
 
 .try .label {
@@ -38,7 +38,7 @@ h1 {
 
 #status {
   position: absolute;
-  top: 50px;
+  top: 175px;
   right: 0px;
   width: 150px;
   text-align: right;
