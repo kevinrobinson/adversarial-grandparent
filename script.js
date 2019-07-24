@@ -17,7 +17,7 @@ async function main() {
   const explores = 10;
   async function iteration(parent) {
     const paths = await Promise.all(_.range(0, explores).map(async n => {
-      const mutant = await mutate(parent, {});
+      const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
       // const tigerCat = predictions.filter(p => p.className === 'tiger cat')[0];
       // const p = tigerCat ? tigerCat.probability : 0;
