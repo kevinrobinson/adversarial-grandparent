@@ -5,12 +5,16 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <!-- import the webpage's stylesheet -->
-    <link rel="stylesheet" href="/style.css">
-    
+        
     <!-- import the webpage's javascript file -->
     <script src="/script.js" defer></script>
+    <!-- Load TensorFlow.js. This is required to use MobileNet. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.1"> </script>
+    <!-- Load the MobileNet model. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.0.0"> </script>
+
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="/style.css">
   </head>  
   <body>
     <h1>Hi there!</h1>
@@ -19,6 +23,13 @@
       I'm your cool new webpage. Made with <a href="https://glitch.com">Glitch</a>!
     </p>
 
+    <img
+      id="img"
+      crossorigin="anonymous"
+      alt="cat"
+      width="200"
+      src="https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2Fcat.png?v=1563990068178" />
+  
     <!-- include the Glitch button to show what the webpage is about and
           to make it easier for folks to view source and remix -->
     <div class="glitchButton" style="position:fixed;top:20px;right:20px;"></div>
