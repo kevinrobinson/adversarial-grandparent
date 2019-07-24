@@ -35,8 +35,9 @@ async function main() {
     
     // render
     const SHOW_GRID = true; // grid style, or just a list
-    const SHOW_LABEL = true;
+    const SHOW_LABEL = SHOW_GRID && true;
     const div = document.createElement('div');
+    div.classList.add('try');
     div.style.display = SHOW_GRID ? 'inline-block' : 'flex';
     div.style.height = '200px';
     div.style.opacity = SHOW_GRID ? p : 1;
@@ -71,13 +72,13 @@ async function main() {
     if (next.wat === 'found') {
       foundClassNames[next.params.className] = true;
       console.log('> found' + next.params.className);
-      return iteration(next.params.parent);
+      return iteration(await mutate(next.params.parent, {forceClipart:true})); 
     }
     if (next.wat === 'continue') return iteration(next.params.mutant);
-    if (next.wat === 'abandon') return iteration(next.params.parent);
-    if (next.wat === 'diverge') return iteration(mutate(next.params.parent, {forceClipart:true})); 
+    // if (next.wat === 'abandon') return iteration(next.params.parent);
+    if (next.wat === 'diverge') return iteration(await mutate(next.params.parent, {forceClipart:true})); 
   }
-  iteration((mutate(seed, {forceClipart:true})));
+  iteration(await (mutate(seed, {forceClipart:true})));
 }
 
 function action(foundClassNames, params) {
@@ -86,8 +87,6 @@ function action(foundClassNames, params) {
   if (p > 0.99) return {wat:'found', params};
   if (!foundClassNames[className]) return {wat:'continue', params};
   // return {wat:'abandon', params};
-  
-  console.log('diverge!');
   return {wat:'diverge', params}
 }
 
@@ -104,7 +103,6 @@ async function mutate(parent, options = {}) {
   ctx.putImageData(data, 0, 0);
   
   // branch for more diversity
-  console.log('forceClipart', options.forceClipart);
   if (options.forceClipart) {
     await clipartMutation(canvas, ctx);
   } else {
@@ -132,7 +130,7 @@ async function clipartMutation(canvas, ctx) {
 // color rectangles
 function rectMutation(canvas, ctx, options = {}) {
   const min = options.min || 1;
-  const range = options.range || 5;
+  const range = options.range || 2;
   ctx.fillStyle = rgbaify([
     Math.round(Math.random()*255),
     Math.round(Math.random()*255),
