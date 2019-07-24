@@ -8,20 +8,50 @@ async function main() {
   
   var i = 0;
   async function iteration() {
-    const img = document.getElementById('img');
+    const img = document.createElement('img');
     img.crossOrigin = 'Anonymous';
+    img.width = 200;
+    img.height = 200;
+    const canvas = mutate(img);
     
     img.onload = async () => {
       const predictions = await model.classify(img);
       const div = document.createElement('div');
-      div.innerHTML = JSON.stringify({i, predictions});
+      div.style.display = 'flex';
+      div.style.height = '200px';
+      const pre = document.createElement('pre');
+      pre.innerHTML = JSON.stringify({i, predictions}, null, 2);
+      pre.style['overflow-y'] = 'hidden';
       div.appendChild(img);
-      document.body.appendChild(div);
+      div.appendChild(canvas);
+      div.appendChild(pre);
+      document.querySelector('#out').appendChild(div);
+      i++;
       if (i < 3) iteration();
     };
     
     img.src = original.src;
   }
+  iteration();
+}
+
+function mutate(img) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = rgbaify([
+    Math.round(Math.random()*255),
+    Math.round(Math.random()*255),
+    Math.round(Math.random()*255),
+    1
+  ]);
+  const x = Math.round(canvas.width * Math.random());
+  const y = Math.round(canvas.width * Math.random());
+  const r = Maht.ra
+  ctx.fillRect(x, y, 10, 10);
+}
+
+function rgbaify(quad) {
+  return `rgba(${quad[0]},${quad[1]},${quad[2]},${quad[3]})`;
 }
 
 // function greenify(canvas, ctx, colors) {
