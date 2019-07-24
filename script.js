@@ -1,46 +1,49 @@
 async function main() {
-  // const img = document.createElement('img');
-  // img.src = 
-  
   const model = await window.mobilenet.load();
   
   const original = document.getElementById('img');
   original.crossOrigin = 'Anonymous';
   const seed = document.createElement('canvas');
+  seed.width = 200;
+  seed.height = 200;
   seed.style.width = '200px';
   seed.style.height = '200px';
-  seed.getContext('2d').drawImage(original, 0, 0);
+  // seed.getContext('2d').drawImage(original, 0, 0);
   
   var i = 0;
-  async function iteration() {
-    // const img = document.createElement('img');
-    // img.crossOrigin = 'Anonymous';
-    // img.width = 200;
-    // img.height = 200;
+  async function iteration(parent) {
+    const mutants = [0, 1, 2, 3, 4, 5].map(n => mutate(parent));
+    const ps = mutants.map(async mutant => {
+      const predictions = await model.classify(mutant);
+      // const tigerCat = predictions.filter(p => p.className === 'tiger cat')[0];
+      // const p = tigerCat ? tigerCat.probability : 0;
+      const p = predictions[0].probability;
+      return p;
+    });
+    const index = Ma
     
-    // img.onload = async () => {
-    const mutant = mutate(seed);
-    const predictions = await model.classify(mutant);
     const div = document.createElement('div');
     div.style.display = 'flex';
     div.style.height = '200px';
     const pre = document.createElement('pre');
-    pre.innerHTML = JSON.stringify({i, predictions}, null, 2);
+    pre.innerHTML = JSON.stringify({i, p, predictions}, null, 2);
     pre.style['overflow-y'] = 'hidden';
     div.appendChild(mutant);
     div.appendChild(pre);
     document.querySelector('#out').appendChild(div);
-    i++;
-    if (i < 3) iteration();
-    // };
     
-    // img.src = original.src;
+    i++;
+    if (i > 1000) return;
+    if (p > 0.10) return iteration(mutant);
+    iteration(parent);
   }
-  iteration();
+  iteration(seed);
 }
 
 function mutate(parent) {
   const canvas = document.createElement('canvas');
+  canvas.width = 200;
+  canvas.height = 200;
   canvas.style.width = '200px';
   canvas.style.height = '200px';
   const ctx = canvas.getContext('2d');
@@ -55,9 +58,9 @@ function mutate(parent) {
     Math.round(Math.random()*255),
     1
   ]);
-  const x = Math.round(canvas.width * Math.random());
-  const y = Math.round(canvas.width * Math.random());
-  const r = Math.round(Math.random() * 10) + 5;
+  const r = Math.round(Math.random() * 10) + 10;
+  const x = Math.round((canvas.width - r) * Math.random());
+  const y = Math.round((canvas.height - r) * Math.random());
   ctx.fillRect(x, y, r, r);
   
   return canvas;
