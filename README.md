@@ -10,7 +10,17 @@ search should look for things it can start low and raise high, report on the lar
 
 try being more subtle and swapping or mutating pixels instead of drawing random colors.
 
-## some examples
+## screenshots.  i can haz...
+### television
+![](https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2F300-television.png?v=1564001586808)
+
+### canoe
+![](https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2F300-canoe.png?v=1564001590903)
+
+### platypus
+![](https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2F300-platypus.png?v=1564001604227)
+
+## some older specific examples
 ### umbrella | 61 > 99
 ![](https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2FScreen%20Shot%202019-07-24%20at%202.50.11%20PM.png?v=1563994426096)
 ![](https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2FScreen%20Shot%202019-07-24%20at%202.50.17%20PM.png?v=1563994425804)
