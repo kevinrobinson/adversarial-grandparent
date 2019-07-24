@@ -84,7 +84,8 @@ async function mutate(parent, options = {}) {
   
   // branch for more diversity
   const branch = options.flip || Math.random();
-  if (branch < 0.20) {
+  const CLIPART_P = 0.05;
+  if (branch < CLIPART_P) {
     await clipartMutation(canvas, ctx);
   } else {
     rectMutation(canvas, ctx);
@@ -108,8 +109,8 @@ async function clipartMutation(canvas, ctx) {
 
 // color rectangles
 function rectMutation(canvas, ctx, options = {}) {
-  const min = options.min || 5;
-  const range = options.range || 10;
+  const min = options.min || 1;
+  const range = options.range || 5;
   ctx.fillStyle = rgbaify([
     Math.round(Math.random()*255),
     Math.round(Math.random()*255),
