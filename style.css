@@ -10,7 +10,19 @@ h1 {
   color: #373fff;
 }
 
+#bar {
+  display: flex;
+/*   position: fixed;
+  top: 30px;
+  height: 220px;
+  background: rgba(255, 255, 255, 0.); */
+}
+
 #frame {
+/*   margin-top: 250px; */
+}
+
+#out {
   zoom: 50%;
 }
 
