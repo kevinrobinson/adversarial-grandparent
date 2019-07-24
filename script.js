@@ -19,8 +19,6 @@ async function main() {
     const paths = await Promise.all(_.range(0, explores).map(async n => {
       const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
-      // const tigerCat = predictions.filter(p => p.className === 'tiger cat')[0];
-      // const p = tigerCat ? tigerCat.probability : 0;
       
       // highest not yet found
       const prediction = predictions.filter(prediction => !foundClassNames[prediction.className])[0];
@@ -109,14 +107,16 @@ async function clipartMutation(canvas, ctx) {
 }
 
 // color rectangles
-function rectMutation(canvas, ctx) {
+function rectMutation(canvas, ctx, options = {}) {
+  const min = options.min || 5;
+  const range = options.range || 10;
   ctx.fillStyle = rgbaify([
     Math.round(Math.random()*255),
     Math.round(Math.random()*255),
     Math.round(Math.random()*255),
     1
   ]);
-  const r = Math.round(Math.random() * 10) + 5;
+  const r = Math.round(Math.random() * range) + min;
   const x = Math.round((canvas.width - r) * Math.random());
   const y = Math.round((canvas.height - r) * Math.random());
   ctx.fillRect(x, y, r, r);
