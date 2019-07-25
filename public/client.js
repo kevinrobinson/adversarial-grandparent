@@ -68,9 +68,6 @@ async function main() {
       newline();
       return iteration(await newClipartMutation());
     }
-    if (next.wat === 'abandon') {
-      return iteration(next.params.parent);
-    }
     if (next.wat === 'continue') {
       return iteration(next.params.mutant);
     }
@@ -106,6 +103,17 @@ async function main() {
     iteration(await newClipartMutation());
   }
 }
+
+
+function action(foundClassNames, params) {
+  const {i, p, className, mutant, parent} = params;
+  if (i > 1000) return {wat: 'done'};
+  if (SEEKING_ZERO && p < 0.05) return {wat:'found', params};
+  if (!SEEKING_ZERO && p > 0.99) return {wat:'found', params};
+  if (!foundClassNames[className]) return {wat:'continue', params};
+  return {wat:'diverge', params}
+}
+
 
 function createBlockEl(i, choice, paths, next) {
   const {mutant, p, predictions, className, n} = choice;
