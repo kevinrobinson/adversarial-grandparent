@@ -54,7 +54,6 @@ h1 {
 .Block-explore {
   display: flex;
   width: 200px;
-  height: 200px;
   overflow: hidden;
 }
 
@@ -69,8 +68,13 @@ h1 {
 
 .Block-label {
   width: 200px;
-  height: 20px;
+  margin-bottom: 2px;
   overflow: hidden;
   font-size: 12px;
   cursor: pointer;
+}
+
+.Block-line {
+  height: 2px;
+  background: #333;
 }

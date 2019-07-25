@@ -1,5 +1,7 @@
 var _ = window._;
 
+const SEEKING_ZERO = true;
+
 async function main() {
   const model = await window.mobilenet.load();
   
@@ -14,9 +16,9 @@ async function main() {
   
   var i = 0;
   var foundClassNames = {};
-  const EXPLORATIONS = 20; // essentially tunes the level of feedback during iterations
   async function iteration(parent) {
     // explore
+    const EXPLORATIONS = 20; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
@@ -29,7 +31,7 @@ async function main() {
       return {mutant, predictions, p, className, n};
     }));
     const debug = paths.map(path => { return {p: path.p, className: path.className }; });
-    const {mutant, p, predictions, className, n} = _.maxBy(paths, path => path.p);
+    const {mutant, p, predictions, className, n} = (SEEKING_ZERO ? _.minBy: _.maxBy)(paths, path => path.p);
     
     // decide
     i++;
@@ -43,10 +45,10 @@ async function main() {
     // render explorations
     const exploreEl = document.createElement('div');
     exploreEl.classList.add('Block-explore');
-    paths.map(path => path.mutant).filter(path => path.mutant !== mutant).forEach(mutant => {
-      mutant.style.width = Math.ceil(200 / EXPLORATIONS) + 'px';
-      mutant.style.height = Math.ceil(200 / EXPLORATIONS) + 'px';
-      exploreEl.appendChild(mutant);
+    paths.filter(path => path.n !== n).forEach(path => {
+      path.mutant.style.width = Math.ceil(200 / (EXPLORATIONS -1)) + 'px';
+      path.mutant.style.height = Math.ceil(200 / (EXPLORATIONS - 1)) + 'px';
+      exploreEl.appendChild(path.mutant);
     });
     // exploreEl.style.zoom = 
     blockEl.appendChild(exploreEl);
@@ -66,15 +68,14 @@ async function main() {
     // label and line
     const labelEl = document.createElement('div');
     labelEl.classList.add('Block-label');
-    labelEl.style.opacity = p;
+    labelEl.style.opacity = SEEKING_ZERO ? 1-p : p;
     labelEl.innerText = p.toFixed(3) + '  ' + className;
     labelEl.title = json;
     mutantEl.appendChild(labelEl);
     
     const line = document.createElement('div');
-    line.style.height = '2px';
+    line.classList.add('Block-line');
     line.style.width = Math.round(200 * p).toFixed(0) + 'px';
-    line.style.background = '#373fff';
     mutantEl.appendChild(line);
 
     // debug
@@ -102,7 +103,8 @@ async function main() {
 function action(foundClassNames, params) {
   const {i, p, className, mutant, parent} = params;
   if (i > 1000) return {wat: 'done'};
-  if (p > 0.99) return {wat:'found', params};
+  if (SEEKING_ZERO && p < 0.05) return {wat:'found', params};
+  if (!SEEKING_ZERO && p > 0.99) return {wat:'found', params};
   if (!foundClassNames[className]) return {wat:'continue', params};
   // return {wat:'abandon', params};
   return {wat:'diverge', params}
