@@ -51,70 +51,28 @@ async function main() {
     const next = action(foundClassNames, {i, p, className, mutant, parent});
     
     // render
-    const blockEl = document.createElement('div');
-    blockEl.classList.add('Block');
-    document.querySelector('#out').appendChild(blockEl);
-    
-    // render explorations
-    const exploreEl = document.createElement('div');
-    exploreEl.classList.add('Block-explore');
-    paths.filter(path => path.n !== n).forEach(path => {
-      path.mutant.style.width = Math.ceil(200 / (EXPLORATIONS -1)) + 'px';
-      path.mutant.style.height = Math.ceil(200 / (EXPLORATIONS - 1)) + 'px';
-      exploreEl.appendChild(path.mutant);
-    });
-    // exploreEl.style.zoom = 
-    blockEl.appendChild(exploreEl);
-
-    // mutant
-    const mutantEl = document.createElement('div');
-    mutantEl.classList.add('Block-mutant');
-    // mutantEl.style.opacity = p;
-    mutantEl.appendChild(mutant);
-    const json = JSON.stringify({
-      i,
-      wat: next.wat,
-      p,
-      predictions
-    }, null, 2);
-    
-    // label and line
-    const labelEl = document.createElement('div');
-    labelEl.classList.add('Block-label');
-    labelEl.style.opacity = SEEKING_ZERO ? 1-p : p;
-    labelEl.innerText = p.toFixed(3) + '  ' + className;
-    labelEl.title = json;
-    mutantEl.appendChild(labelEl);
-    
-    const line = document.createElement('div');
-    line.classList.add('Block-line');
-    line.style.width = Math.round(200 * p).toFixed(0) + 'px';
-    mutantEl.appendChild(line);
-
-    // debug
-    // const pre = document.createElement('pre');
-    // pre.innerHTML = json;
-    // pre.style['overflow'] = 'hidden';
-    // div.appendChild(pre);
-
-    blockEl.appendChild(mutantEl);
-    
-    async function rotate() {
-      newline();
-      iteration(await mutate(next.params.parent, {forceClipart:true})); 
-    }
+    appendBlockTo(out);
     
     // act
-    if (aborted) return;
-    if (next.wat === 'done') return;
+    if (aborted) {
+      return;
+    }
+    if (next.wat === 'done') {
+      return;
+    }
     if (next.wat === 'found') {
       foundClassNames[next.params.className] = true;
       console.log('> found' + next.params.className);
-      return rotate();
+      newline();
+      return iteration(await newClipartMutation());
     }
-    if (next.wat === 'continue') return iteration(next.params.mutant);
-    // if (next.wat === 'abandon') return iteration(next.params.parent);
-    if (next.wat === 'diverge') return rotate();
+    if (next.wat === 'continue') {
+      return iteration(next.params.mutant);
+    }
+    if (next.wat === 'diverge') {
+      newline();
+      return iteration(await newClipartMutation());
+    }
   }
 
   // abort, start with new image
@@ -140,17 +98,65 @@ async function main() {
     const url = decodeURIComponent(window.location.search.slice(5));
     iteration(await fromImageURL(url));
   } else {
-    iteration(await (mutate(createSeed(), {forceClipart:true})));
+    iteration(await newClipartMutation());
   }
 }
 
+function appendBlockTo(outEl) {
+  const blockEl = document.createElement('div');
+  blockEl.classList.add('Block');
+  document.querySelector('#out').appendChild(blockEl);
+
+  // render explorations
+  const exploreEl = document.createElement('div');
+  exploreEl.classList.add('Block-explore');
+  paths.filter(path => path.n !== n).forEach(path => {
+    path.mutant.style.width = Math.ceil(200 / (EXPLORATIONS -1)) + 'px';
+    path.mutant.style.height = Math.ceil(200 / (EXPLORATIONS - 1)) + 'px';
+    exploreEl.appendChild(path.mutant);
+  });
+  // exploreEl.style.zoom = 
+  blockEl.appendChild(exploreEl);
+
+  // mutant
+  const mutantEl = document.createElement('div');
+  mutantEl.classList.add('Block-mutant');
+  // mutantEl.style.opacity = p;
+  mutantEl.appendChild(mutant);
+  const json = JSON.stringify({
+    i,
+    wat: next.wat,
+    p,
+    predictions
+  }, null, 2);
+
+  // label and line
+  const labelEl = document.createElement('div');
+  labelEl.classList.add('Block-label');
+  labelEl.style.opacity = SEEKING_ZERO ? 1-p : p;
+  labelEl.innerText = p.toFixed(3) + '  ' + className;
+  labelEl.title = json;
+  mutantEl.appendChild(labelEl);
+
+  const line = document.createElement('div');
+  line.classList.add('Block-line');
+  line.style.width = Math.round(200 * p).toFixed(0) + 'px';
+  mutantEl.appendChild(line);
+
+  // debug
+  // const pre = document.createElement('pre');
+  // pre.innerHTML = json;
+  // pre.style['overflow'] = 'hidden';
+  // div.appendChild(pre);
+
+  blockEl.appendChild(mutantEl);
+}
 function action(foundClassNames, params) {
   const {i, p, className, mutant, parent} = params;
   if (i > 1000) return {wat: 'done'};
   if (SEEKING_ZERO && p < 0.05) return {wat:'found', params};
   if (!SEEKING_ZERO && p > 0.99) return {wat:'found', params};
   if (!foundClassNames[className]) return {wat:'continue', params};
-  // return {wat:'abandon', params};
   return {wat:'diverge', params}
 }
 
@@ -164,25 +170,11 @@ function createMutantCanvas() {
   return {canvas, ctx};
 }
 
-async function mutate(parent, options = {}) {
+
+// discard input altogether
+async function newClipartMutation(parent = null, options = {}) {
   const {canvas, ctx} = createMutantCanvas();
   
-  // ctx.drawImage(img, 0, 0);
-  const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
-  ctx.putImageData(data, 0, 0);
-  
-  // branch for more diversity
-  if (options.forceClipart) {
-    await clipartMutation(canvas, ctx);
-  } else if (options.forcePixel) {
-    pixelMutation(canvas, ctx);
-  } else {
-    rectMutation(canvas, ctx);
-  }
-  return canvas;
-}
-
-async function clipartMutation(canvas, ctx) {
   // https://picsum.photos/200/200?i
   const img = new Image();
   const i = Math.random();
@@ -217,22 +209,29 @@ async function fromImageURL(url) {
   });
 }
 
-// modify pixel
-function pixelMutation(canvas, ctx, options = {}) {
-  const pixels = options.pixels || 5;
+// modify pixels
+function pixelMutation(parent, options = {}) {
+  const pixels = options.pixels || 10;
+  const modRange = options.modRange || 255/4;
+  const opacityRange = options.opacityRange || 255/4;
+  const dx = options.dx || 2;
+  const dy = options.dy || 2;
+  
+  const {canvas, ctx} = createMutantCanvas();
+  const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
+  ctx.putImageData(data, 0, 0);
+
   _.range(0, pixels).forEach(n => {
     const x = Math.round(Math.random() * canvas.width);
     const y = Math.round(Math.random() * canvas.height);
-    const [r, g, b] = ctx.getImageData(x, y, 1, 1).data
-
-    const modRange = 255/4;
-    const deltaX = Math.round(Math.random() * 2);
-    const deltaY = Math.round(Math.random() * 2);
+    const [r, g, b] = ctx.getImageData(x, y, 1, 1).data  
+    const deltaX = Math.round(Math.random() * dx);
+    const deltaY = Math.round(Math.random() * dy);
     const color = rgbaify([
       clampAndRound((r-modRange) + (Math.random()* modRange*2)),
       clampAndRound((g-modRange) + (Math.random()* modRange*2)),
       clampAndRound((b-modRange) + (Math.random()* modRange*2)),
-      Math.round(Math.random()*255/4) // err towards less strong
+      Math.round(Math.random()* opacityRange)
     ]);
     ctx.fillStyle = color;
     ctx.fillRect(x+deltaX, y+deltaY, 1, 1);
@@ -240,13 +239,17 @@ function pixelMutation(canvas, ctx, options = {}) {
 }
 
 // color rectangles
-function rectMutation(canvas, ctx, options = {}) {
+function rectMutation(parent, options = {}) {
   const draws = options.draws || 1;
   const min = options.min || 1;
   const range = options.range || 2;
   
+  const {canvas, ctx} = createMutantCanvas();
+  const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
+  ctx.putImageData(data, 0, 0);
+  
+  // draw colored rects
   _.range(0, draws).forEach(i => {
-    // draw colored rect
     const color = pickMutantColor(canvas, ctx, options);  
     ctx.fillStyle = color;
     const w = Math.round(Math.random() * range) + min;
@@ -314,118 +317,9 @@ function sampleColor(canvas, ctx) {
   ];
 }
 
-// https://stackoverflow.com/questions/2303690/resizing-an-image-in-an-html5-canvas
-
-/**
- * Hermite resize - fast image resize/resample using Hermite filter. 1 cpu version!
- * 
- * @param {HtmlElement} canvas
- * @param {int} width
- * @param {int} height
- * @param {boolean} resize_canvas if true, canvas will be resized. Optional.
- */
-function resample(canvas, width, height, resize_canvas) {
-    var width_source = canvas.width;
-    var height_source = canvas.height;
-    width = Math.round(width);
-    height = Math.round(height);
-
-    var ratio_w = width_source / width;
-    var ratio_h = height_source / height;
-    var ratio_w_half = Math.ceil(ratio_w / 2);
-    var ratio_h_half = Math.ceil(ratio_h / 2);
-
-    var ctx = canvas.getContext("2d");
-    var img = ctx.getImageData(0, 0, width_source, height_source);
-    var img2 = ctx.createImageData(width, height);
-    var data = img.data;
-    var data2 = img2.data;
-
-    for (var j = 0; j < height; j++) {
-        for (var i = 0; i < width; i++) {
-            var x2 = (i + j * width) * 4;
-            var weight = 0;
-            var weights = 0;
-            var weights_alpha = 0;
-            var gx_r = 0;
-            var gx_g = 0;
-            var gx_b = 0;
-            var gx_a = 0;
-            var center_y = (j + 0.5) * ratio_h;
-            var yy_start = Math.floor(j * ratio_h);
-            var yy_stop = Math.ceil((j + 1) * ratio_h);
-            for (var yy = yy_start; yy < yy_stop; yy++) {
-                var dy = Math.abs(center_y - (yy + 0.5)) / ratio_h_half;
-                var center_x = (i + 0.5) * ratio_w;
-                var w0 = dy * dy; //pre-calc part of w
-                var xx_start = Math.floor(i * ratio_w);
-                var xx_stop = Math.ceil((i + 1) * ratio_w);
-                for (var xx = xx_start; xx < xx_stop; xx++) {
-                    var dx = Math.abs(center_x - (xx + 0.5)) / ratio_w_half;
-                    var w = Math.sqrt(w0 + dx * dx);
-                    if (w >= 1) {
-                        //pixel too far
-                        continue;
-                    }
-                    //hermite filter
-                    weight = 2 * w * w * w - 3 * w * w + 1;
-                    var pos_x = 4 * (xx + yy * width_source);
-                    //alpha
-                    gx_a += weight * data[pos_x + 3];
-                    weights_alpha += weight;
-                    //colors
-                    if (data[pos_x + 3] < 255)
-                        weight = weight * data[pos_x + 3] / 250;
-                    gx_r += weight * data[pos_x];
-                    gx_g += weight * data[pos_x + 1];
-                    gx_b += weight * data[pos_x + 2];
-                    weights += weight;
-                }
-            }
-            data2[x2] = gx_r / weights;
-            data2[x2 + 1] = gx_g / weights;
-            data2[x2 + 2] = gx_b / weights;
-            data2[x2 + 3] = gx_a / weights_alpha;
-        }
-    }
-    //clear and resize canvas
-    if (resize_canvas === true) {
-        canvas.width = width;
-        canvas.height = height;
-    } else {
-        ctx.clearRect(0, 0, width_source, height_source);
-    }
-
-    //draw
-    ctx.putImageData(img2, 0, 0);
-}
-
 function rgbaify(quad) {
   return `rgba(${quad[0]},${quad[1]},${quad[2]},${quad[3]})`;
 }
-
-// function greenify(canvas, ctx, colors) {
-//   const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-//   let l = frame.data.length / 4;
-
-//   // console.log('frame.data', frame.data);
-//   for (let i = 0; i < l; i++) {
-//     let r = frame.data[i * 4 + 0];
-//     let g = frame.data[i * 4 + 1];
-//     let b = frame.data[i * 4 + 2];
-//     if (matchesAny(r, g, b, colors)) {
-//       // console.log('matches!')
-//       // frame.data[i * 4 + 0] = 0;
-//       // frame.data[i * 4 + 1] = 0;
-//       // frame.data[i * 4 + 2] = 0;
-//       frame.data[i * 4 + 3] = 0;
-//     }
-//     // if (i % 10 === 0) {
-//     //   console.log('i', i, r, g, b);
-//     // }
-//   }
-//   ctx.putImageData(frame, 0, 0);
-// }
 
 function status(msg) {
   document.querySelector('#status').innerText = msg;
