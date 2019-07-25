@@ -16,6 +16,15 @@ async function main() {
   var foundClassNames = {};
   const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
   async function iteration(parent) {
+    const blockEl = document.createElement('div');
+    blockEl.classList.add('Block');
+    document.querySelector('#out').appendChild(blockEl);
+    
+    const exploreEl = document.createElement('div');
+    exploreEl.classList.add('Block-explore');
+    exploreEl.style.zoom = Math.round(100 / EXPLORATIONS) + '%';
+    blockEl.appendChild(exploreEl);
+    
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
@@ -39,20 +48,8 @@ async function main() {
     
     // render
     const div = document.createElement('div');
-    div.classList.add('try');
-    div.style.display = 'inline-block';
-    div.style.height = '200px';
-    // div.style.opacity = SHOW_GRID ? p : 1;
-    
-    const exploreEl = document.createElement('div');
-    exploreEl.classList.add('Explore');
-    exploreEl.style.display = 'flex';
-    exploreEl.style.width = '200px';
-    exploreEl.style.height = '200px';
-    exploreEl.style.zoom = Math.round(100 / EXPLORATIONS) + '%';
-    document.querySelector('#out').appendChild(exploreEl);
-    
-    
+    div.classList.add('Block-mutant');
+    // div.style.opacity = p;
     div.appendChild(mutant);
     const json = JSON.stringify({
       i,
@@ -61,12 +58,8 @@ async function main() {
       predictions
     }, null, 2);
     const labelEl = document.createElement('div');
-    labelEl.classList.add('label');
-    labelEl.style.width = '200px';
-    labelEl.style.height = '1.5em';
-    labelEl.style.overflow = 'hidden';
+    labelEl.classList.add('Block-label');
     labelEl.style.opacity = p;
-    labelEl.style['font-size'] = '12px';
     labelEl.innerText = p.toFixed(3) + '  ' + className;
     labelEl.title = json;
     div.appendChild(labelEl);
@@ -81,7 +74,7 @@ async function main() {
     // pre.style['overflow'] = 'hidden';
     // div.appendChild(pre);
 
-    document.querySelector('#out').appendChild(div);
+    blockEl.appendChild(div);
     
     // act
     if (next.wat === 'done') return;

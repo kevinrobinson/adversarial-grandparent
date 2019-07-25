@@ -26,10 +26,6 @@ h1 {
   zoom: 80%;
 }
 
-.try .label {
-  cursor: pointer;
-}
-
 #img-status {
   position: relative;
   margin-right: 20px;
@@ -44,4 +40,34 @@ h1 {
   text-align: right;
   color: white;
   padding-right: 10px;
+}
+
+
+.Block {
+  display: inline-block;
+  width: 400px;
+  height: 220px;
+}
+
+.Block-explore {
+  display: flex;
+  width: 200px;
+  height: 200px;
+}
+
+.Block-explore > canvas {
+  display: inline-block;
+}
+
+.Block-mutant {
+  display: inline-block;
+  height: 200px;
+}
+
+.Block-label {
+  width: 200px;
+  height: 1.5em;
+  overflow: hidden;
+  font-size: 12px;
+  cursor: pointer;
 }
