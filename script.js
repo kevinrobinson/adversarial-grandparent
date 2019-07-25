@@ -24,6 +24,10 @@ async function main() {
       const prediction = predictions.filter(prediction => !foundClassNames[prediction.className])[0];
       const p = prediction.probability;
       const className = prediction.className;
+      
+      // debug
+      exploreEl.appendChild(mutant);
+      
       return {mutant, predictions, p, className};
     }));
     const debug = paths.map(path => { return {p: path.p, className: path.className }; });
@@ -34,13 +38,21 @@ async function main() {
     const next = action(foundClassNames, {i, p, className, mutant, parent});
     
     // render
-    const SHOW_GRID = true; // grid style, or just a list
-    const SHOW_LABEL = SHOW_GRID && true;
     const div = document.createElement('div');
     div.classList.add('try');
-    div.style.display = SHOW_GRID ? 'inline-block' : 'flex';
+    div.style.display = 'inline-block';
     div.style.height = '200px';
-    div.style.opacity = SHOW_GRID ? p : 1;
+    // div.style.opacity = SHOW_GRID ? p : 1;
+    
+    const exploreEl = document.createElement('div');
+    exploreEl.classList.add('Explore');
+    exploreEl.style.display = 'flex';
+    exploreEl.style.width = '200px';
+    exploreEl.style.height = '200px';
+    exploreEl.style.zoom = Math.round(100 / EXPLORATIONS) + '%';
+    document.querySelector('#out').appendChild(exploreEl);
+    
+    
     div.appendChild(mutant);
     const json = JSON.stringify({
       i,
@@ -48,25 +60,27 @@ async function main() {
       p,
       predictions
     }, null, 2);
-    if (SHOW_GRID) {
-      if (SHOW_LABEL) {
-        const labelEl = document.createElement('div');
-        labelEl.classList.add('label');
-        labelEl.style.width = '200px';
-        labelEl.style.height = '1.5em';
-        labelEl.style.overflow = 'hidden';
-        labelEl.style.opacity = p;
-        labelEl.style['font-size'] = '12px';
-        labelEl.innerText = p.toFixed(3) + '  ' + className;
-        labelEl.title = json;
-        div.appendChild(labelEl);
-      }
-    } else {
-      const pre = document.createElement('pre');
-      pre.innerHTML = json;
-      pre.style['overflow'] = 'hidden';
-      div.appendChild(pre);
-    }
+    const labelEl = document.createElement('div');
+    labelEl.classList.add('label');
+    labelEl.style.width = '200px';
+    labelEl.style.height = '1.5em';
+    labelEl.style.overflow = 'hidden';
+    labelEl.style.opacity = p;
+    labelEl.style['font-size'] = '12px';
+    labelEl.innerText = p.toFixed(3) + '  ' + className;
+    labelEl.title = json;
+    div.appendChild(labelEl);
+    
+    const line = document.createElement('div');
+    line.style.height = '2px';
+    line.style.width = Math.round(200 * p).toFixed(0) + 'px';
+    line.style.background = '#373fff';
+
+    // const pre = document.createElement('pre');
+    // pre.innerHTML = json;
+    // pre.style['overflow'] = 'hidden';
+    // div.appendChild(pre);
+
     document.querySelector('#out').appendChild(div);
     
     // act
@@ -133,16 +147,20 @@ async function clipartMutation(canvas, ctx) {
 function rectMutation(canvas, ctx, options = {}) {
   const min = options.min || 1;
   const range = options.range || 3;
-  ctx.fillStyle = rgbaify([
-    Math.round(Math.random()*255),
-    Math.round(Math.random()*255),
-    Math.round(Math.random()*255),
-    1
-  ]);
-  const r = Math.round(Math.random() * range) + min;
-  const x = Math.round((canvas.width - r) * Math.random());
-  const y = Math.round((canvas.height - r) * Math.random());
-  ctx.fillRect(x, y, r, r);
+  
+  const pixels = options.pixels || 1;
+  _.range(0, pixels).forEach(i => {
+    ctx.fillStyle = rgbaify([
+      Math.round(Math.random()*255),
+      Math.round(Math.random()*255),
+      Math.round(Math.random()*255),
+      Math.round(Math.random()*255)
+    ]);
+    const r = Math.round(Math.random() * range) + min;
+    const x = Math.round((canvas.width - r) * Math.random());
+    const y = Math.round((canvas.height - r) * Math.random());
+    ctx.fillRect(x, y, r, r);
+  });
 }
 
 function rgbaify(quad) {
