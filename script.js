@@ -184,30 +184,67 @@ async function clipartMutation(canvas, ctx) {
 
 async function fromImageURL(url) {
   const img = new Image();
-  const i = Math.random();
   return new Promise((resolve, reject) => {
-    img.onload = async function() {
-      status('messing up ur image!');
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.style.width = canvas.width + 'px';
-      canvas.style.height = canvas.height + 'px';
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      document.body.appendChild(canvas);
-      
-      // resample
-      const resampled = createMutantCanvas();
-      resample(resampled.canvas, 200, 200, document.createElement('canvas'));
-      document.body.appendChild(resampled.canvas);
-      resolve(resampled.canvas);
-    }
-    img.crossOrigin = 'Anonymous';
-    status('grabbing your image...');
+    img.onload = function() {
+      const {canvas, ctx} = createMutantCanvas();
+      ctx.drawImage(img,
+        0, 0,   // Start at 70/20 pixels from the left and the top of the image (crop),
+        img.width, img.height,   // "Get" a `50 * 50` (w * h) area from the source image (crop),
+        0, 0,     // Place the result at 0, 0 in the canvas,
+        200, 200); // With as width / height: 100 * 100 (scale)
+      // ctx.drawImage(img,
+      //   70, 20,   // Start at 70/20 pixels from the left and the top of the image (crop),
+      //   50, 50,   // "Get" a `50 * 50` (w * h) area from the source image (crop),
+      //   0, 0,     // Place the result at 0, 0 in the canvas,
+      //   100, 100); // With as width / height: 100 * 100 (scale)
+      return canvas;
+    };
     img.src = url;
   });
 }
+  
+  // // load in img since we can't listen to background-image events, but
+  // // can assume caching
+  // const img = new Image();
+  // return new Promise((resolve, reject) => {
+  //   img.onload = async function() {
+  //     const div = document.createElement('div');
+  //     div.style['background-image'] = 'url(' + url + ')';
+  //     div.style['background-size'] = 'cover';
+  //     div.style.width = '200px';
+  //     div.style.height = '200px';
+  //     document.body.appendChild(div);
+  //     const {canvas} = createMutantCanvas();
+  //     resolve(canvas);
+  //   };
+  //   img.src = url;
+  // });
+    
+//   const img = new Image();
+//   const i = Math.random();
+//   return new Promise((resolve, reject) => {
+//     img.onload = async function() {
+//       status('messing up ur image!');
+//       const canvas = document.createElement('canvas');
+//       canvas.width = img.width;
+//       canvas.height = img.height;
+//       canvas.style.width = canvas.width + 'px';
+//       canvas.style.height = canvas.height + 'px';
+//       const ctx = canvas.getContext('2d');
+//       ctx.drawImage(img, 0, 0);
+//       document.body.appendChild(canvas);
+      
+//       // resample
+//       const resampled = createMutantCanvas();
+//       resample(resampled.canvas, 200, 200, document.createElement('canvas'));
+//       document.body.appendChild(resampled.canvas);
+//       resolve(resampled.canvas);
+//     }
+//     img.crossOrigin = 'Anonymous';
+//     status('grabbing your image...');
+//     img.src = url;
+//   });
+// }
 
 // color rectangles
 function rectMutation(canvas, ctx, options = {}) {
