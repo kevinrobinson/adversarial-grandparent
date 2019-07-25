@@ -1,6 +1,6 @@
 var _ = window._;
 
-const SEEKING_ZERO = true;
+const SEEKING_ZERO = (window.location.search.indexOf('?seekzero') === 0);
 
 async function main() {
   const model = await window.mobilenet.load();
@@ -18,7 +18,7 @@ async function main() {
   var foundClassNames = {};
   async function iteration(parent) {
     // explore
-    const EXPLORATIONS = 20; // essentially tunes the level of feedback during iterations
+    const EXPLORATIONS = 30; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
@@ -86,16 +86,22 @@ async function main() {
 
     blockEl.appendChild(mutantEl);
     
+    async function rotate() {
+      const br = document.createElement('br');
+      document.querySelector('#out').appendChild(br);
+      iteration(await mutate(next.params.parent, {forceClipart:true})); 
+    }
+    
     // act
     if (next.wat === 'done') return;
     if (next.wat === 'found') {
       foundClassNames[next.params.className] = true;
       console.log('> found' + next.params.className);
-      return iteration(await mutate(next.params.parent, {forceClipart:true})); 
+      return rotate();
     }
     if (next.wat === 'continue') return iteration(next.params.mutant);
     // if (next.wat === 'abandon') return iteration(next.params.parent);
-    if (next.wat === 'diverge') return iteration(await mutate(next.params.parent, {forceClipart:true})); 
+    if (next.wat === 'diverge') return rotate();
   }
   iteration(await (mutate(seed, {forceClipart:true})));
 }
@@ -150,21 +156,42 @@ async function clipartMutation(canvas, ctx) {
 // color rectangles
 function rectMutation(canvas, ctx, options = {}) {
   const min = options.min || 1;
-  const range = options.range || 3;
+  const range = options.range || 2;
+  
+
   
   const pixels = options.pixels || 1;
   _.range(0, pixels).forEach(i => {
-    ctx.fillStyle = rgbaify([
-      Math.round(Math.random()*255),
-      Math.round(Math.random()*255),
-      Math.round(Math.random()*255),
+    
+    // random, transparent-ish
+    // ctx.fillStyle = rgbaify([
+    //   Math.round(Math.random()*255),
+    //   Math.round(Math.random()*255),
+    //   Math.round(Math.random()*255),
+    //   Math.round(Math.random()*255/4) // err towards less strong
+    // ]);
+    
+    // with color drawn from image
+    ctx.fillStyle = rgbaify(sampleColor(canvas, ctx).concat([
       Math.round(Math.random()*255/4) // err towards less strong
-    ]);
+    ]));
+    
     const r = Math.round(Math.random() * range) + min;
     const x = Math.round((canvas.width - r) * Math.random());
     const y = Math.round((canvas.height - r) * Math.random());
     ctx.fillRect(x, y, r, r);
   });
+}
+
+function sampleColor(canvas, ctx) {
+  const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const pixelCount = frame.data.length / 4;
+  const i = (Math.random() * pixelCount);
+  return [
+    frame.data[i * 4 + 0],
+    frame.data[i * 4 + 1],
+    frame.data[i * 4 + 2]
+  ];
 }
 
 function rgbaify(quad) {

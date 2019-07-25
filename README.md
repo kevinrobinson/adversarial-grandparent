@@ -10,6 +10,11 @@ search should look for things it can start low and raise high, report on the lar
 
 try being more subtle and swapping or mutating pixels instead of drawing random colors.
 
+## knobs to fiddle with
+explorations
+how many draws per mutation, their size
+whether color is drawn from image or random
+
 ## screenshots.  i can haz...
 ### television
 ![](https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2F300-television.png?v=1564001586808)
