@@ -69,6 +69,7 @@ h1 {
 .Block-label {
   width: 200px;
   margin-bottom: 2px;
+  white-space: nowrap;
   overflow: hidden;
   font-size: 12px;
   cursor: pointer;

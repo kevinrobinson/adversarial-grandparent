@@ -11,9 +11,10 @@ search should look for things it can start low and raise high, report on the lar
 try being more subtle and swapping or mutating pixels instead of drawing random colors.
 
 ## knobs to fiddle with
-explorations
-how many draws per mutation, their size
-whether color is drawn from image or random
+- number of explorations
+- how many draws per mutation, their size, opacity
+- whether color is drawn from image or random
+
 
 ## screenshots.  i can haz...
 ### television

@@ -2,9 +2,7 @@ var _ = window._;
 
 const SEEKING_ZERO = (window.location.search.indexOf('?seekzero') === 0);
 
-async function main() {
-  const model = await window.mobilenet.load();
-  
+function createSeed() {
   const original = document.getElementById('img');
   original.crossOrigin = 'Anonymous';
   const seed = document.createElement('canvas');
@@ -13,9 +11,19 @@ async function main() {
   seed.style.width = '200px';
   seed.style.height = '200px';
   // seed.getContext('2d').drawImage(original, 0, 0);
+  return seed;
+}
+
+async function main() {
+  // load model before anything
+  const model = await window.mobilenet.load();
   
+  // state
+  var aborted = false;
   var i = 0;
   var foundClassNames = {};
+  
+  // loop
   async function iteration(parent) {
     // explore
     const EXPLORATIONS = 30; // essentially tunes the level of feedback during iterations
@@ -93,6 +101,7 @@ async function main() {
     }
     
     // act
+    if (aborted) return;
     if (next.wat === 'done') return;
     if (next.wat === 'found') {
       foundClassNames[next.params.className] = true;
@@ -103,7 +112,22 @@ async function main() {
     // if (next.wat === 'abandon') return iteration(next.params.parent);
     if (next.wat === 'diverge') return rotate();
   }
-  iteration(await (mutate(seed, {forceClipart:true})));
+
+  // abort, start with new image
+  document.querySelector('#own-image').addEventListener('click', async e => {
+    const url = prompt('What image URL?');
+    if (!url) return;
+    
+    seedFromImage
+    aborted = true;
+    i = 0;
+    foundClassNames = {};
+    iteration(await (mutate(seedFromImage, {forceClipart:true})));
+  });
+  
+
+  // startup
+  iteration(await (mutate(createSeed(), {forceClipart:true})));
 }
 
 function action(foundClassNames, params) {
@@ -155,13 +179,8 @@ async function clipartMutation(canvas, ctx) {
 
 // color rectangles
 function rectMutation(canvas, ctx, options = {}) {
-  const min = options.min || 1;
-  const range = options.range || 2;
-  
-
-  
-  const pixels = options.pixels || 1;
-  _.range(0, pixels).forEach(i => {
+  const draws = options.draws || 1;
+  _.range(0, draws).forEach(i => {
     
     // random, transparent-ish
     // ctx.fillStyle = rgbaify([
@@ -172,14 +191,27 @@ function rectMutation(canvas, ctx, options = {}) {
     // ]);
     
     // with color drawn from image
-    ctx.fillStyle = rgbaify(sampleColor(canvas, ctx).concat([
-      Math.round(Math.random()*255/4) // err towards less strong
-    ]));
+    // ctx.fillStyle = rgbaify(sampleColor(canvas, ctx).concat([
+    //   Math.round(Math.random()*255/4) // err towards less strong
+    // ]));
     
-    const r = Math.round(Math.random() * range) + min;
-    const x = Math.round((canvas.width - r) * Math.random());
-    const y = Math.round((canvas.height - r) * Math.random());
-    ctx.fillRect(x, y, r, r);
+    // color drawn from image and modified
+    const [r,g,b] = sampleColor(canvas, ctx);
+    ctx.fillStyle = rgbaify([
+      Math.max(0, Math.min((r-10) + (Math.random()* 20), 255)),
+      Math.max(0, Math.min((g-10) + (Math.random()* 20), 255)),
+      Math.max(0, Math.min((b-10) + (Math.random()* 20), 255)),
+      Math.round(Math.random()*255/4) // err towards less strong
+    ]);
+    
+    
+    // rect
+    const min = options.min || 1;
+    const range = options.range || 2;
+    const w = Math.round(Math.random() * range) + min;
+    const x = Math.round((canvas.width - w) * Math.random());
+    const y = Math.round((canvas.height - w) * Math.random());
+    ctx.fillRect(x, y, w, w);
   });
 }
 
