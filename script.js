@@ -31,7 +31,7 @@ async function main() {
   // loop
   async function iteration(parent) {
     // explore
-    const EXPLORATIONS = 50; // essentially tunes the level of feedback during iterations
+    const EXPLORATIONS = 25; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
@@ -233,7 +233,7 @@ function rectMutation(canvas, ctx, options = {}) {
 }
 
 function pickMutantColor(canvas, ctx, options = {}) {
-  const mode = options.mode || 'random';
+  const mode = options.mode || 'drawn-and-modified';
   
   // with color drawn from image
   if (mode === 'drawn') {
@@ -242,7 +242,7 @@ function pickMutantColor(canvas, ctx, options = {}) {
     ]));
   }
 
-  // color drawn from image and modified (eg, 1/5th)
+  // color drawn from image and modified (eg, 1/4th)
   if (mode === 'drawn-and-modified') {
     const [r,g,b] = sampleColor(canvas, ctx);
     const modRange = 255/4;
