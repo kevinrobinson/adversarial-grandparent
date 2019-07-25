@@ -31,7 +31,7 @@ async function main() {
   // loop
   async function iteration(parent) {
     // explore
-    const EXPLORATIONS = 30; // essentially tunes the level of feedback during iterations
+    const EXPLORATIONS = 50; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
@@ -219,12 +219,12 @@ async function fromImageURL(url) {
 function rectMutation(canvas, ctx, options = {}) {
   const draws = options.draws || 1;
   const min = options.min || 1;
-  const range = options.range || 2;
+  const range = options.range || 1;
   
   _.range(0, draws).forEach(i => {
     // draw colored rect
-    const color = pickColor(canvas, ctx, options);  
-    console.log('color', color);
+    const color = pickMutantColor(canvas, ctx, options);  
+    ctx.fillStyle = color;
     const w = Math.round(Math.random() * range) + min;
     const x = Math.round((canvas.width - w) * Math.random());
     const y = Math.round((canvas.height - w) * Math.random());
@@ -232,8 +232,9 @@ function rectMutation(canvas, ctx, options = {}) {
   });
 }
 
-function pickColor(canvas, ctx, options = {}) {
-  const mode = options.mode || 'drawn-and-modified';
+function pickMutantColor(canvas, ctx, options = {}) {
+  const mode = options.mode || 'random';
+  
   // with color drawn from image
   if (mode === 'drawn') {
     return rgbaify(sampleColor(canvas, ctx).concat([
@@ -244,7 +245,7 @@ function pickColor(canvas, ctx, options = {}) {
   // color drawn from image and modified (eg, 1/5th)
   if (mode === 'drawn-and-modified') {
     const [r,g,b] = sampleColor(canvas, ctx);
-    const modRange = 255/10;
+    const modRange = 255/4;
     return rgbaify([
       clampAndRound((r-modRange) + (Math.random()* modRange*2)),
       clampAndRound((g-modRange) + (Math.random()* modRange*2)),
@@ -253,12 +254,22 @@ function pickColor(canvas, ctx, options = {}) {
     ]);
   }
 
+  // white, transparent-ish
+  if (mode === 'white-ish') {
+    return rgbaify([
+      255,
+      255,
+      255,
+      Math.round(Math.random()*255/4) // err towards less strong
+    ]);
+  }
+  
   // random, transparent-ish
   return rgbaify([
     Math.round(Math.random()*255),
     Math.round(Math.random()*255),
     Math.round(Math.random()*255),
-    Math.round(Math.random()*255/4) // err towards less strong
+    1
   ]);
 }
 
