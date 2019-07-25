@@ -23,6 +23,11 @@ async function main() {
   var i = 0;
   var foundClassNames = {};
   
+  function newline() {
+    const br = document.createElement('br');
+    document.querySelector('#out').appendChild(br);
+  }
+  
   // loop
   async function iteration(parent) {
     // explore
@@ -95,8 +100,7 @@ async function main() {
     blockEl.appendChild(mutantEl);
     
     async function rotate() {
-      const br = document.createElement('br');
-      document.querySelector('#out').appendChild(br);
+      newline();
       iteration(await mutate(next.params.parent, {forceClipart:true})); 
     }
     
@@ -115,19 +119,29 @@ async function main() {
 
   // abort, start with new image
   document.querySelector('#own-image').addEventListener('click', async e => {
-    const url = prompt('What image URL?');
-    if (!url) return;
+    e.preventDefault();
+    const url = prompt("What image URL?\n\neg: https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2FScreen%20Shot%202019-07-25%20at%2012.26.04%20PM.png?v=1564071974428");
+  if (!url) return;  
     
-    // restart
+    window.history.pushState({}, '', '?url=' + encodeURIComponent(url));
+    // hacky restart
     aborted = true;
-    i = 0;
-    foundClassNames = {};
-    iteration(await fromImageURL(url));
+    setTimeout(async () => {
+      i = 0;
+      foundClassNames = {};
+      aborted = false;
+      newline();
+      iteration(await fromImageURL(url));
+    }, 1000);
   });
-  
 
   // startup
-  iteration(await (mutate(createSeed(), {forceClipart:true})));
+  if (window.location.search.indexOf('?url=') === 0) {
+    const url = decodeURIComponent(window.location.search.slice(5));
+    iteration(await fromImageURL(url));
+  } else {
+    iteration(await (mutate(createSeed(), {forceClipart:true})));
+  }
 }
 
 function action(foundClassNames, params) {
@@ -197,8 +211,9 @@ async function fromImageURL(url) {
       //   50, 50,   // "Get" a `50 * 50` (w * h) area from the source image (crop),
       //   0, 0,     // Place the result at 0, 0 in the canvas,
       //   100, 100); // With as width / height: 100 * 100 (scale)
-      return canvas;
+      resolve(canvas);
     };
+    img.crossOrigin = 'Anonymous';
     img.src = url;
   });
 }
