@@ -33,7 +33,9 @@ async function main() {
     // explore
     const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
-      const mutant = await mutate(parent, {forcePixel: true});
+      // try different mutations here
+      // const mutant = rectMutation(parent);
+      const mutant = pixelMutation(parent);
       const predictions = await model.classify(mutant);
       
       // highest not yet found
@@ -44,14 +46,16 @@ async function main() {
       return {mutant, predictions, p, className, n};
     }));
     const debug = paths.map(path => { return {p: path.p, className: path.className }; });
-    const {mutant, p, predictions, className, n} = (SEEKING_ZERO ? _.minBy: _.maxBy)(paths, path => path.p);
+    const choice = (SEEKING_ZERO ? _.minBy: _.maxBy)(paths, path => path.p);
+    const {mutant, p, predictions, className, n} = choice;
     
     // decide
     i++;
     const next = action(foundClassNames, {i, p, className, mutant, parent});
     
     // render
-    appendBlockTo(out);
+    const blockEl = createBlockEl(i, choice, paths, next);
+    document.querySelector('#out').appendChild(blockEl);
     
     // act
     if (aborted) {
@@ -102,17 +106,18 @@ async function main() {
   }
 }
 
-function appendBlockTo(outEl) {
+function createBlockEl(i, choice, paths, next) {
+  const {mutant, p, predictions, className, n} = choice;
+  
   const blockEl = document.createElement('div');
   blockEl.classList.add('Block');
-  document.querySelector('#out').appendChild(blockEl);
 
   // render explorations
   const exploreEl = document.createElement('div');
   exploreEl.classList.add('Block-explore');
   paths.filter(path => path.n !== n).forEach(path => {
-    path.mutant.style.width = Math.ceil(200 / (EXPLORATIONS -1)) + 'px';
-    path.mutant.style.height = Math.ceil(200 / (EXPLORATIONS - 1)) + 'px';
+    path.mutant.style.width = Math.ceil(200 / (paths.length -1)) + 'px';
+    path.mutant.style.height = Math.ceil(200 / (paths.length - 1)) + 'px';
     exploreEl.appendChild(path.mutant);
   });
   // exploreEl.style.zoom = 
@@ -150,7 +155,10 @@ function appendBlockTo(outEl) {
   // div.appendChild(pre);
 
   blockEl.appendChild(mutantEl);
+  
+  return blockEl;
 }
+
 function action(foundClassNames, params) {
   const {i, p, className, mutant, parent} = params;
   if (i > 1000) return {wat: 'done'};
@@ -236,6 +244,8 @@ function pixelMutation(parent, options = {}) {
     ctx.fillStyle = color;
     ctx.fillRect(x+deltaX, y+deltaY, 1, 1);
   });
+  
+  return canvas;
 }
 
 // color rectangles
@@ -257,6 +267,8 @@ function rectMutation(parent, options = {}) {
     const y = Math.round((canvas.height - w) * Math.random());
     ctx.fillRect(x, y, w, w);
   });
+  
+  return canvas;
 }
 
 function pickMutantColor(canvas, ctx, options = {}) {
