@@ -201,97 +201,30 @@ async function fromImageURL(url) {
   return new Promise((resolve, reject) => {
     img.onload = function() {
       const {canvas, ctx} = createMutantCanvas();
+      
+      // unsmart resizing
       ctx.drawImage(img,
         0, 0,   // Start at 70/20 pixels from the left and the top of the image (crop),
         img.width, img.height,   // "Get" a `50 * 50` (w * h) area from the source image (crop),
         0, 0,     // Place the result at 0, 0 in the canvas,
         200, 200); // With as width / height: 100 * 100 (scale)
-      // ctx.drawImage(img,
-      //   70, 20,   // Start at 70/20 pixels from the left and the top of the image (crop),
-      //   50, 50,   // "Get" a `50 * 50` (w * h) area from the source image (crop),
-      //   0, 0,     // Place the result at 0, 0 in the canvas,
-      //   100, 100); // With as width / height: 100 * 100 (scale)
       resolve(canvas);
     };
     img.crossOrigin = 'Anonymous';
     img.src = url;
   });
 }
-  
-  // // load in img since we can't listen to background-image events, but
-  // // can assume caching
-  // const img = new Image();
-  // return new Promise((resolve, reject) => {
-  //   img.onload = async function() {
-  //     const div = document.createElement('div');
-  //     div.style['background-image'] = 'url(' + url + ')';
-  //     div.style['background-size'] = 'cover';
-  //     div.style.width = '200px';
-  //     div.style.height = '200px';
-  //     document.body.appendChild(div);
-  //     const {canvas} = createMutantCanvas();
-  //     resolve(canvas);
-  //   };
-  //   img.src = url;
-  // });
-    
-//   const img = new Image();
-//   const i = Math.random();
-//   return new Promise((resolve, reject) => {
-//     img.onload = async function() {
-//       status('messing up ur image!');
-//       const canvas = document.createElement('canvas');
-//       canvas.width = img.width;
-//       canvas.height = img.height;
-//       canvas.style.width = canvas.width + 'px';
-//       canvas.style.height = canvas.height + 'px';
-//       const ctx = canvas.getContext('2d');
-//       ctx.drawImage(img, 0, 0);
-//       document.body.appendChild(canvas);
-      
-//       // resample
-//       const resampled = createMutantCanvas();
-//       resample(resampled.canvas, 200, 200, document.createElement('canvas'));
-//       document.body.appendChild(resampled.canvas);
-//       resolve(resampled.canvas);
-//     }
-//     img.crossOrigin = 'Anonymous';
-//     status('grabbing your image...');
-//     img.src = url;
-//   });
-// }
 
 // color rectangles
 function rectMutation(canvas, ctx, options = {}) {
   const draws = options.draws || 1;
+  const min = options.min || 1;
+  const range = options.range || 2;
+  
   _.range(0, draws).forEach(i => {
-    
-    // random, transparent-ish
-    // ctx.fillStyle = rgbaify([
-    //   Math.round(Math.random()*255),
-    //   Math.round(Math.random()*255),
-    //   Math.round(Math.random()*255),
-    //   Math.round(Math.random()*255/4) // err towards less strong
-    // ]);
-    
-    // with color drawn from image
-    // ctx.fillStyle = rgbaify(sampleColor(canvas, ctx).concat([
-    //   Math.round(Math.random()*255/4) // err towards less strong
-    // ]));
-    
-    // color drawn from image and modified (eg, 1/5th)
-    const [r,g,b] = sampleColor(canvas, ctx);
-    ctx.fillStyle = rgbaify([
-      Math.max(0, Math.min((r-255/10) + (Math.random()* 255/5), 255)),
-      Math.max(0, Math.min((g-255/10) + (Math.random()* 255/5), 255)),
-      Math.max(0, Math.min((b-255/10) + (Math.random()* 255/5), 255)),
-      Math.round(Math.random()*255/4) // err towards less strong
-    ]);
-    
-    
-    // rect
-    const min = options.min || 1;
-    const range = options.range || 2;
+    // draw colored rect
+    const color = pickColor(canvas, ctx, options);  
+    console.log('color', color);
     const w = Math.round(Math.random() * range) + min;
     const x = Math.round((canvas.width - w) * Math.random());
     const y = Math.round((canvas.height - w) * Math.random());
@@ -299,10 +232,44 @@ function rectMutation(canvas, ctx, options = {}) {
   });
 }
 
+function pickColor(canvas, ctx, options = {}) {
+  const mode = options.mode || 'drawn-and-modified';
+  // with color drawn from image
+  if (mode === 'drawn') {
+    return rgbaify(sampleColor(canvas, ctx).concat([
+      Math.round(Math.random()*255/4) // err towards less strong
+    ]));
+  }
+
+  // color drawn from image and modified (eg, 1/5th)
+  if (mode === 'drawn-and-modified') {
+    const [r,g,b] = sampleColor(canvas, ctx);
+    const modRange = 255/10;
+    return rgbaify([
+      clampAndRound((r-modRange) + (Math.random()* modRange*2)),
+      clampAndRound((g-modRange) + (Math.random()* modRange*2)),
+      clampAndRound((b-modRange) + (Math.random()* modRange*2)),
+      Math.round(Math.random()*255/4) // err towards less strong
+    ]);
+  }
+
+  // random, transparent-ish
+  return rgbaify([
+    Math.round(Math.random()*255),
+    Math.round(Math.random()*255),
+    Math.round(Math.random()*255),
+    Math.round(Math.random()*255/4) // err towards less strong
+  ]);
+}
+
+function clampAndRound(r) {
+  return Math.round(Math.max(0, Math.min(r, 255)));
+}
+
 function sampleColor(canvas, ctx) {
   const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixelCount = frame.data.length / 4;
-  const i = (Math.random() * pixelCount);
+  const i = Math.round(Math.random() * pixelCount);
   return [
     frame.data[i * 4 + 0],
     frame.data[i * 4 + 1],
