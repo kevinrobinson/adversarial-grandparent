@@ -3,7 +3,7 @@ grab random images, mobilenet them, and throw pixels on top until mobilenet is s
 
 check out images in assets for examples, or just let it run
 
-or use your own image urls, [like messi](https://adversarial-grandparent.glitch.me/?url=https%3A%2F%2Fcdn.glitch.com%2F7fcf14f2-d9c4-4b34-a78e-e77543df038a%252FScreen%2520Shot%25202019-07-25%2520at%252012.26.04%2520PM.png%3Fv%3D1564071974428) or *[turn me against myself](https://cdn.glitch.com/7fcf14f2-d9c4-4b34-a78e-e77543df038a%2Fcat.png?v=1563990068178)
+or use your own image urls, [like messi](https://adversarial-grandparent.glitch.me/?url=https%3A%2F%2Fcdn.glitch.com%2F7fcf14f2-d9c4-4b34-a78e-e77543df038a%252FScreen%2520Shot%25202019-07-25%2520at%252012.26.04%2520PM.png%3Fv%3D1564071974428) or *[turn me against myself](https://adversarial-grandparent.glitch.me/?url=https%3A%2F%2Fcdn.glitch.com%2F7fcf14f2-d9c4-4b34-a78e-e77543df038a%252Fcat.png%3Fv%3D1563990068178)
 
 ## notes
 throw the data at ngraph to see generations and branches as a tree.  could interactively add pruning/exploration advice.

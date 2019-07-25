@@ -1,18 +1,8 @@
 var _ = window._;
 
 const SEEKING_ZERO = (window.location.search.indexOf('?seekzero') === 0);
+const SHOULD_NOTIFY = (window.location.search.indexOf('?notify') === 0);
 
-function createSeed() {
-  const original = document.getElementById('img');
-  original.crossOrigin = 'Anonymous';
-  const seed = document.createElement('canvas');
-  seed.width = 200;
-  seed.height = 200;
-  seed.style.width = '200px';
-  seed.style.height = '200px';
-  // seed.getContext('2d').drawImage(original, 0, 0);
-  return seed;
-}
 
 async function main() {
   // load model before anything
@@ -33,7 +23,9 @@ async function main() {
     // explore
     const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
-      const mutant = await mutate(parent, {forcePixel: true});
+      // try different mutations here
+      // const mutant = rectMutation(parent);
+      const mutant = pixelMutation(parent);
       const predictions = await model.classify(mutant);
       
       // highest not yet found
@@ -44,14 +36,16 @@ async function main() {
       return {mutant, predictions, p, className, n};
     }));
     const debug = paths.map(path => { return {p: path.p, className: path.className }; });
-    const {mutant, p, predictions, className, n} = (SEEKING_ZERO ? _.minBy: _.maxBy)(paths, path => path.p);
+    const choice = (SEEKING_ZERO ? _.minBy: _.maxBy)(paths, path => path.p);
+    const {mutant, p, predictions, className, n} = choice;
     
     // decide
     i++;
     const next = action(foundClassNames, {i, p, className, mutant, parent});
     
     // render
-    appendBlockTo(out);
+    const blockEl = createBlockEl(i, choice, paths, next);
+    document.querySelector('#out').appendChild(blockEl);
     
     // act
     if (aborted) {
@@ -63,8 +57,19 @@ async function main() {
     if (next.wat === 'found') {
       foundClassNames[next.params.className] = true;
       console.log('> found' + next.params.className);
+      notify({
+        i,
+        p,
+        predictions,
+        className: next.params.className,
+        dataURL: mutant.toDataURL(),
+        config: {EXPLORATIONS}
+      });
       newline();
       return iteration(await newClipartMutation());
+    }
+    if (next.wat === 'abandon') {
+      return iteration(next.params.parent);
     }
     if (next.wat === 'continue') {
       return iteration(next.params.mutant);
@@ -102,17 +107,18 @@ async function main() {
   }
 }
 
-function appendBlockTo(outEl) {
+function createBlockEl(i, choice, paths, next) {
+  const {mutant, p, predictions, className, n} = choice;
+  
   const blockEl = document.createElement('div');
   blockEl.classList.add('Block');
-  document.querySelector('#out').appendChild(blockEl);
 
   // render explorations
   const exploreEl = document.createElement('div');
   exploreEl.classList.add('Block-explore');
   paths.filter(path => path.n !== n).forEach(path => {
-    path.mutant.style.width = Math.ceil(200 / (EXPLORATIONS -1)) + 'px';
-    path.mutant.style.height = Math.ceil(200 / (EXPLORATIONS - 1)) + 'px';
+    path.mutant.style.width = Math.ceil(200 / (paths.length -1)) + 'px';
+    path.mutant.style.height = Math.ceil(200 / (paths.length - 1)) + 'px';
     exploreEl.appendChild(path.mutant);
   });
   // exploreEl.style.zoom = 
@@ -150,15 +156,10 @@ function appendBlockTo(outEl) {
   // div.appendChild(pre);
 
   blockEl.appendChild(mutantEl);
+  
+  return blockEl;
 }
-function action(foundClassNames, params) {
-  const {i, p, className, mutant, parent} = params;
-  if (i > 1000) return {wat: 'done'};
-  if (SEEKING_ZERO && p < 0.05) return {wat:'found', params};
-  if (!SEEKING_ZERO && p > 0.99) return {wat:'found', params};
-  if (!foundClassNames[className]) return {wat:'continue', params};
-  return {wat:'diverge', params}
-}
+
 
 function createMutantCanvas() {
   const canvas = document.createElement('canvas');
@@ -236,6 +237,8 @@ function pixelMutation(parent, options = {}) {
     ctx.fillStyle = color;
     ctx.fillRect(x+deltaX, y+deltaY, 1, 1);
   });
+  
+  return canvas;
 }
 
 // color rectangles
@@ -257,6 +260,8 @@ function rectMutation(parent, options = {}) {
     const y = Math.round((canvas.height - w) * Math.random());
     ctx.fillRect(x, y, w, w);
   });
+  
+  return canvas;
 }
 
 function pickMutantColor(canvas, ctx, options = {}) {
@@ -323,6 +328,19 @@ function rgbaify(quad) {
 
 function status(msg) {
   document.querySelector('#status').innerText = msg;
+}
+
+function notify(json) {
+  if (!SHOULD_NOTIFY) return;
+  
+  return fetch('/image', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify(json)
+  }).catch(err => console.error('notify failed', err, json));
 }
 
 main();
