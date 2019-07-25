@@ -13,11 +13,11 @@ search should look for things it can start low and raise high, report on the lar
 try being more subtle and swapping or mutating pixels instead of drawing random colors.
 
 ## knobs to fiddle with
-- number of explorations
+- number of explorations (for small changes, stay shallow but for bigger ones deeper can help)
 - how many draws per mutation, their size, opacity
 - whether color is drawn from image or random
 - remix the code to fiddle with the mutations! (try `EXPLORATIONS = n`, `rectMutation`, `pickMutantColor`)
-
+- pixel mutations, rect mutations
 
 ## screenshots.  i can haz...
 ### television

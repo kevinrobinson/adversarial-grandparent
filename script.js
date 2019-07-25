@@ -31,9 +31,9 @@ async function main() {
   // loop
   async function iteration(parent) {
     // explore
-    const EXPLORATIONS = 25; // essentially tunes the level of feedback during iterations
+    const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
-      const mutant = await mutate(parent);
+      const mutant = await mutate(parent, {forcePixel: true});
       const predictions = await model.classify(mutant);
       
       // highest not yet found
@@ -174,6 +174,8 @@ async function mutate(parent, options = {}) {
   // branch for more diversity
   if (options.forceClipart) {
     await clipartMutation(canvas, ctx);
+  } else if (options.forcePixel) {
+    pixelMutation(canvas, ctx);
   } else {
     rectMutation(canvas, ctx);
   }
@@ -215,11 +217,33 @@ async function fromImageURL(url) {
   });
 }
 
+// modify pixel
+function pixelMutation(canvas, ctx, options = {}) {
+  const pixels = options.pixels || 5;
+  _.range(0, pixels).forEach(n => {
+    const x = Math.round(Math.random() * canvas.width);
+    const y = Math.round(Math.random() * canvas.height);
+    const [r, g, b] = ctx.getImageData(x, y, 1, 1).data
+
+    const modRange = 255/4;
+    const deltaX = Math.round(Math.random() * 2);
+    const deltaY = Math.round(Math.random() * 2);
+    const color = rgbaify([
+      clampAndRound((r-modRange) + (Math.random()* modRange*2)),
+      clampAndRound((g-modRange) + (Math.random()* modRange*2)),
+      clampAndRound((b-modRange) + (Math.random()* modRange*2)),
+      Math.round(Math.random()*255/4) // err towards less strong
+    ]);
+    ctx.fillStyle = color;
+    ctx.fillRect(x+deltaX, y+deltaY, 1, 1);
+  });
+}
+
 // color rectangles
 function rectMutation(canvas, ctx, options = {}) {
   const draws = options.draws || 1;
   const min = options.min || 1;
-  const range = options.range || 1;
+  const range = options.range || 2;
   
   _.range(0, draws).forEach(i => {
     // draw colored rect
@@ -245,6 +269,8 @@ function pickMutantColor(canvas, ctx, options = {}) {
   // color drawn from image and modified (eg, 1/4th)
   if (mode === 'drawn-and-modified') {
     const [r,g,b] = sampleColor(canvas, ctx);
+    const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
+    ctx.putImageData(data, 0, 0);
     const modRange = 255/4;
     return rgbaify([
       clampAndRound((r-modRange) + (Math.random()* modRange*2)),
