@@ -14,17 +14,9 @@ async function main() {
   
   var i = 0;
   var foundClassNames = {};
-  const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
+  const EXPLORATIONS = 20; // essentially tunes the level of feedback during iterations
   async function iteration(parent) {
-    const blockEl = document.createElement('div');
-    blockEl.classList.add('Block');
-    document.querySelector('#out').appendChild(blockEl);
-    
-    const exploreEl = document.createElement('div');
-    exploreEl.classList.add('Block-explore');
-    exploreEl.style.zoom = Math.round(100 / EXPLORATIONS) + '%';
-    blockEl.appendChild(exploreEl);
-    
+    // explore
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       const mutant = await mutate(parent);
       const predictions = await model.classify(mutant);
@@ -33,48 +25,65 @@ async function main() {
       const prediction = predictions.filter(prediction => !foundClassNames[prediction.className])[0];
       const p = prediction.probability;
       const className = prediction.className;
-      
-      // debug
-      exploreEl.appendChild(mutant);
-      
-      return {mutant, predictions, p, className};
+            
+      return {mutant, predictions, p, className, n};
     }));
     const debug = paths.map(path => { return {p: path.p, className: path.className }; });
-    const {mutant, p, predictions, className} = _.maxBy(paths, path => path.p);
+    const {mutant, p, predictions, className, n} = _.maxBy(paths, path => path.p);
     
     // decide
     i++;
     const next = action(foundClassNames, {i, p, className, mutant, parent});
     
     // render
-    const div = document.createElement('div');
-    div.classList.add('Block-mutant');
-    // div.style.opacity = p;
-    div.appendChild(mutant);
+    const blockEl = document.createElement('div');
+    blockEl.classList.add('Block');
+    document.querySelector('#out').appendChild(blockEl);
+    
+    // render explorations
+    const exploreEl = document.createElement('div');
+    exploreEl.classList.add('Block-explore');
+    paths.map(path => path.mutant).filter(path => path.mutant !== mutant).forEach(mutant => {
+      mutant.style.width = Math.ceil(200 / EXPLORATIONS) + 'px';
+      mutant.style.height = Math.ceil(200 / EXPLORATIONS) + 'px';
+      exploreEl.appendChild(mutant);
+    });
+    // exploreEl.style.zoom = 
+    blockEl.appendChild(exploreEl);
+
+    // mutant
+    const mutantEl = document.createElement('div');
+    mutantEl.classList.add('Block-mutant');
+    // mutantEl.style.opacity = p;
+    mutantEl.appendChild(mutant);
     const json = JSON.stringify({
       i,
       wat: next.wat,
       p,
       predictions
     }, null, 2);
+    
+    // label and line
     const labelEl = document.createElement('div');
     labelEl.classList.add('Block-label');
     labelEl.style.opacity = p;
     labelEl.innerText = p.toFixed(3) + '  ' + className;
     labelEl.title = json;
-    div.appendChild(labelEl);
+    mutantEl.appendChild(labelEl);
     
     const line = document.createElement('div');
     line.style.height = '2px';
     line.style.width = Math.round(200 * p).toFixed(0) + 'px';
     line.style.background = '#373fff';
+    mutantEl.appendChild(line);
 
+    // debug
     // const pre = document.createElement('pre');
     // pre.innerHTML = json;
     // pre.style['overflow'] = 'hidden';
     // div.appendChild(pre);
 
-    blockEl.appendChild(div);
+    blockEl.appendChild(mutantEl);
     
     // act
     if (next.wat === 'done') return;
@@ -147,7 +156,7 @@ function rectMutation(canvas, ctx, options = {}) {
       Math.round(Math.random()*255),
       Math.round(Math.random()*255),
       Math.round(Math.random()*255),
-      Math.round(Math.random()*255)
+      Math.round(Math.random()*255/4) // err towards less strong
     ]);
     const r = Math.round(Math.random() * range) + min;
     const x = Math.round((canvas.width - r) * Math.random());

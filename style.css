@@ -45,14 +45,17 @@ h1 {
 
 .Block {
   display: inline-block;
-  width: 400px;
-  height: 220px;
+  vertical-align: top;
+  width: 200px;
+  height: 242px;
+  margin-right: 10px;
 }
 
 .Block-explore {
   display: flex;
   width: 200px;
   height: 200px;
+  overflow: hidden;
 }
 
 .Block-explore > canvas {
@@ -66,7 +69,7 @@ h1 {
 
 .Block-label {
   width: 200px;
-  height: 1.5em;
+  height: 20px;
   overflow: hidden;
   font-size: 12px;
   cursor: pointer;
