@@ -10,13 +10,20 @@ h1 {
   color: #373fff;
 }
 
-#bar {
-  display: flex;
-/*   position: fixed;
-  top: 30px;
-  height: 220px;
-  background: rgba(255, 255, 255, 0.); */
+
+@media (max-width: 600px) {
+  #bar {
+    display: flex;
+    flex-direction: column;
+  }
 }
+@media (min-width: 600px) {
+  #bar {
+    display: flex;
+    flex-direction: row;
+  }
+}
+
 
 #frame {
 /*   margin-top: 250px; */
@@ -25,9 +32,13 @@ h1 {
 #out {
   zoom: 80%;
 }
+@media (max-width: 600px) {
+  text-align: center;
+}
 
 #img-status {
   position: relative;
+  width: 200px;
   margin-right: 20px;
   margin-bottom: 20px;
 }
@@ -49,6 +60,12 @@ h1 {
   width: 200px;
   height: 242px;
   margin-right: 10px;
+}
+
+@media (max-width: 600px) {
+  .Block {
+    margin-bottom: 30px;
+  }
 }
 
 .Block-explore {
