@@ -223,8 +223,8 @@ function pixelMutation(parent, options = {}) {
   const pixels = options.pixels || 10;
   const modRange = options.modRange || 255/4;
   const opacityRange = options.opacityRange || 255/4;
-  const dx = options.dx || 2;
-  const dy = options.dy || 2;
+  const dx = options.dx || 3;
+  const dy = options.dy || 3;
   
   const {canvas, ctx} = createMutantCanvas();
   const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
