@@ -4,7 +4,7 @@ var IMAGENET_CLASSES = window.IMAGENET_CLASSES;
 const SEEKING_ZERO = (window.location.search.indexOf('?seekzero') === 0);
 const SHOULD_NOTIFY = (window.location.search.indexOf('?notify') === 0);
 
-const targetClassName = Object.values(IMAGENET_CLASSES)[3];
+const targetClassName = 'chickadee'; //Object.values(IMAGENET_CLASSES)[3];
 
 async function main() {
   // load model before anything
@@ -27,8 +27,9 @@ async function main() {
     const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       // try different mutations here
-      // const mutant = rectMutation(parent);
-      const mutant = pixelMutation(parent);
+      const mutant = (Math.random() > 0.7)
+        ? rectMutation(parent)
+        : pixelMutation(parent);
       const predictions = await model.classify(mutant, TOP_K);
       
       // highest not yet found
@@ -40,6 +41,7 @@ async function main() {
       const prediction = predictions.filter(prediction => prediction.className === targetClassName)[0];
       const p = prediction.probability;
       const className = prediction.className;
+      if (i % 100 === 0) { console.log('i', i, p); }
             
       return {mutant, predictions, p, className, n};
     }));
@@ -293,7 +295,7 @@ function pickMutantColor(canvas, ctx, options = {}) {
   // color drawn from image and modified (eg, 1/4th)
   if (mode === 'drawn-and-modified') {
     const [r,g,b] = sampleColor(canvas, ctx);
-    const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
+    const data = canvas.getContext('2d').getImageData(0, 0, 200, 200);
     ctx.putImageData(data, 0, 0);
     const modRange = 255/4;
     return rgbaify([
