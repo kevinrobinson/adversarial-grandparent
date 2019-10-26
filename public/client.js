@@ -1,8 +1,10 @@
 var _ = window._;
+var IMAGENET_CLASSES = window.IMAGENET_CLASSES;
 
 const SEEKING_ZERO = (window.location.search.indexOf('?seekzero') === 0);
 const SHOULD_NOTIFY = (window.location.search.indexOf('?notify') === 0);
 
+const targetClassName = Object.values(IMAGENET_CLASSES)[3];
 
 async function main() {
   // load model before anything
@@ -21,15 +23,21 @@ async function main() {
   // loop
   async function iteration(parent) {
     // explore
+    const TOP_K = Object.keys(IMAGENET_CLASSES).length;
     const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       // try different mutations here
       // const mutant = rectMutation(parent);
       const mutant = pixelMutation(parent);
-      const predictions = await model.classify(mutant);
+      const predictions = await model.classify(mutant, TOP_K);
       
       // highest not yet found
-      const prediction = predictions.filter(prediction => !foundClassNames[prediction.className])[0];
+      // const prediction = predictions.filter(prediction => !foundClassNames[prediction.className])[0];
+      // const p = prediction.probability;
+      // const className = prediction.className;
+      
+      // find targetClassName
+      const prediction = predictions.filter(prediction => prediction.className === targetClassName)[0];
       const p = prediction.probability;
       const className = prediction.className;
             
