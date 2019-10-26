@@ -5,6 +5,8 @@ check out images in assets for examples, or just let it run
 
 or use your own image urls, [like messi](https://adversarial-grandparent.glitch.me/?url=https%3A%2F%2Fcdn.glitch.com%2F7fcf14f2-d9c4-4b34-a78e-e77543df038a%252FScreen%2520Shot%25202019-07-25%2520at%252012.26.04%2520PM.png%3Fv%3D1564071974428) or *[turn me against myself](https://adversarial-grandparent.glitch.me/?url=https%3A%2F%2Fcdn.glitch.com%2F7fcf14f2-d9c4-4b34-a78e-e77543df038a%252Fcat.png%3Fv%3D1563990068178)
 
+see also https://glitch.com/edit/#!/chickadee-hubris, which messes with every image until mobilenet thinks it is a chickadee.  it's slower so not quite as fun to watch, but maybe makes the point better :)
+
 ## notes
 throw the data at ngraph to see generations and branches as a tree.  could interactively add pruning/exploration advice.
 

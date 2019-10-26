@@ -1,10 +1,8 @@
 var _ = window._;
-var IMAGENET_CLASSES = window.IMAGENET_CLASSES;
 
 const SEEKING_ZERO = (window.location.search.indexOf('?seekzero') === 0);
 const SHOULD_NOTIFY = (window.location.search.indexOf('?notify') === 0);
 
-const targetClassName = 'chickadee'; //Object.values(IMAGENET_CLASSES)[3];
 
 async function main() {
   // load model before anything
@@ -23,22 +21,15 @@ async function main() {
   // loop
   async function iteration(parent) {
     // explore
-    const TOP_K = Object.keys(IMAGENET_CLASSES).length;
-    const EXPLORATIONS = 8; // essentially tunes the level of feedback during iterations
+    const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       // try different mutations here
-      const mutant = (Math.random() < 0.3)
-        ? rectMutation(parent)
-        : pixelMutation(parent);
-      const predictions = await model.classify(mutant, TOP_K);
+      // const mutant = rectMutation(parent);
+      const mutant = pixelMutation(parent);
+      const predictions = await model.classify(mutant);
       
       // highest not yet found
-      // const prediction = predictions.filter(prediction => !foundClassNames[prediction.className])[0];
-      // const p = prediction.probability;
-      // const className = prediction.className;
-      
-      // find targetClassName
-      const prediction = predictions.filter(prediction => prediction.className === targetClassName)[0];
+      const prediction = predictions.filter(prediction => !foundClassNames[prediction.className])[0];
       const p = prediction.probability;
       const className = prediction.className;
             
@@ -51,7 +42,6 @@ async function main() {
     // decide
     i++;
     const next = action(foundClassNames, {i, p, className, mutant, parent});
-    if (i % 5 === 0) { console.log('i', i, p); }
     
     // render
     const blockEl = createBlockEl(i, choice, paths, next);
@@ -233,8 +223,8 @@ function pixelMutation(parent, options = {}) {
   const pixels = options.pixels || 10;
   const modRange = options.modRange || 255/4;
   const opacityRange = options.opacityRange || 255/4;
-  const dx = options.dx || 3;
-  const dy = options.dy || 3;
+  const dx = options.dx || 2;
+  const dy = options.dy || 2;
   
   const {canvas, ctx} = createMutantCanvas();
   const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
@@ -295,7 +285,7 @@ function pickMutantColor(canvas, ctx, options = {}) {
   // color drawn from image and modified (eg, 1/4th)
   if (mode === 'drawn-and-modified') {
     const [r,g,b] = sampleColor(canvas, ctx);
-    const data = canvas.getContext('2d').getImageData(0, 0, 200, 200);
+    const data = parent.getContext('2d').getImageData(0, 0, 200, 200);
     ctx.putImageData(data, 0, 0);
     const modRange = 255/4;
     return rgbaify([
