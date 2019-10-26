@@ -24,10 +24,10 @@ async function main() {
   async function iteration(parent) {
     // explore
     const TOP_K = Object.keys(IMAGENET_CLASSES).length;
-    const EXPLORATIONS = 10; // essentially tunes the level of feedback during iterations
+    const EXPLORATIONS = 8; // essentially tunes the level of feedback during iterations
     const paths = await Promise.all(_.range(0, EXPLORATIONS).map(async n => {
       // try different mutations here
-      const mutant = (Math.random() > 0.7)
+      const mutant = (Math.random() < 0.3)
         ? rectMutation(parent)
         : pixelMutation(parent);
       const predictions = await model.classify(mutant, TOP_K);
@@ -41,7 +41,6 @@ async function main() {
       const prediction = predictions.filter(prediction => prediction.className === targetClassName)[0];
       const p = prediction.probability;
       const className = prediction.className;
-      if (i % 100 === 0) { console.log('i', i, p); }
             
       return {mutant, predictions, p, className, n};
     }));
@@ -52,6 +51,7 @@ async function main() {
     // decide
     i++;
     const next = action(foundClassNames, {i, p, className, mutant, parent});
+    if (i % 5 === 0) { console.log('i', i, p); }
     
     // render
     const blockEl = createBlockEl(i, choice, paths, next);
